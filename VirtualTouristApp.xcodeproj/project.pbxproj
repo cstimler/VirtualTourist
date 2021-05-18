@@ -13,6 +13,8 @@
 		9F9577D12653BF8B001B1A95 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9F9577CF2653BF8B001B1A95 /* Main.storyboard */; };
 		9F9577D32653BF8C001B1A95 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9F9577D22653BF8C001B1A95 /* Assets.xcassets */; };
 		9F9577D62653BF8C001B1A95 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 9F9577D42653BF8C001B1A95 /* LaunchScreen.storyboard */; };
+		9F9577E12653C003001B1A95 /* FlickrPhotosSearchResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F9577E02653C003001B1A95 /* FlickrPhotosSearchResponse.swift */; };
+		9F9577E42653C3F3001B1A95 /* VTClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F9577E32653C3F3001B1A95 /* VTClient.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +26,8 @@
 		9F9577D22653BF8C001B1A95 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9F9577D52653BF8C001B1A95 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		9F9577D72653BF8C001B1A95 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		9F9577E02653C003001B1A95 /* FlickrPhotosSearchResponse.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlickrPhotosSearchResponse.swift; sourceTree = "<group>"; };
+		9F9577E32653C3F3001B1A95 /* VTClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VTClient.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -56,6 +60,8 @@
 		9F9577C82653BF8B001B1A95 /* VirtualTouristApp */ = {
 			isa = PBXGroup;
 			children = (
+				9F9577DF2653BFB2001B1A95 /* VT Responses */,
+				9F9577DE2653BFA6001B1A95 /* VT Client */,
 				9F9577C92653BF8B001B1A95 /* AppDelegate.swift */,
 				9F9577CB2653BF8B001B1A95 /* SceneDelegate.swift */,
 				9F9577CD2653BF8B001B1A95 /* ViewController.swift */,
@@ -65,6 +71,22 @@
 				9F9577D72653BF8C001B1A95 /* Info.plist */,
 			);
 			path = VirtualTouristApp;
+			sourceTree = "<group>";
+		};
+		9F9577DE2653BFA6001B1A95 /* VT Client */ = {
+			isa = PBXGroup;
+			children = (
+				9F9577E32653C3F3001B1A95 /* VTClient.swift */,
+			);
+			path = "VT Client";
+			sourceTree = "<group>";
+		};
+		9F9577DF2653BFB2001B1A95 /* VT Responses */ = {
+			isa = PBXGroup;
+			children = (
+				9F9577E02653C003001B1A95 /* FlickrPhotosSearchResponse.swift */,
+			);
+			path = "VT Responses";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -137,8 +159,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9F9577E12653C003001B1A95 /* FlickrPhotosSearchResponse.swift in Sources */,
 				9F9577CE2653BF8B001B1A95 /* ViewController.swift in Sources */,
 				9F9577CA2653BF8B001B1A95 /* AppDelegate.swift in Sources */,
+				9F9577E42653C3F3001B1A95 /* VTClient.swift in Sources */,
 				9F9577CC2653BF8B001B1A95 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
