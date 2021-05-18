@@ -21,7 +21,7 @@ class VTClient {
         
         var stringValue: String {
             switch self {
-            case .getFlickrPhotosSearch(let lat, let lon, let page, let perPage): return Endpoints.base + "/?&method=flickr.photos.search" + "&api_key=" + Auth.apiKey + "&lat=\(lat) + &lon=\(lon) + &per_page=\(perPage) &page=\(page)"
+            case .getFlickrPhotosSearch(let lat, let lon, let page, let perPage): return Endpoints.base + "/?&method=flickr.photos.search" + "&api_key=" + Auth.apiKey + "&lat=\(lat)&lon=\(lon)&radius=5 &per_page=\(perPage)&page=\(page)&format=json"
             }
         }
         var url: URL {
@@ -29,9 +29,34 @@ class VTClient {
         }
     }
     
-    class func requestPhotosFromFlickr() {
-        
+    class func requestPhotosFromFlickr(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?) -> Void) {
+        var request = URLRequest(url: Endpoints.getFlickrPhotosSearch(lat, lon, page, perPage).url)
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 5
+        let session = URLSession(configuration: configuration)
+        let task = session.dataTask(with: request) {
+            data, response, error in
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(false, error) }
+                    return
+            }
+            do {
+                let decoder = JSONDecoder()
+                let responseObject = try decoder.decode(FlickrPhotosSearchResponse.self, from: data)
+                DispatchQueue.main.async {
+                    completion(true, nil)
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    completion(false, error)
+                }
+            }
+        }
+        task.resume()
     }
+    
+    
     
     
     
