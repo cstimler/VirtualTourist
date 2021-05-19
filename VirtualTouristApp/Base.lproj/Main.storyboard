@@ -16,13 +16,27 @@
                     <view key="view" contentMode="scaleToFill" id="8bC-Xf-vdC">
                         <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <mapView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" mapType="standard" translatesAutoresizingMaskIntoConstraints="NO" id="KzZ-Pb-pwx">
+                                <rect key="frame" x="20" y="44" width="374" height="832"/>
+                            </mapView>
+                        </subviews>
                         <viewLayoutGuide key="safeArea" id="6Tk-OE-BBY"/>
                         <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstAttribute="bottom" secondItem="KzZ-Pb-pwx" secondAttribute="bottom" constant="20" symbolic="YES" id="3eW-Wu-drV"/>
+                            <constraint firstItem="KzZ-Pb-pwx" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="A1x-fc-03b"/>
+                            <constraint firstItem="KzZ-Pb-pwx" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="BYp-td-5xq"/>
+                            <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="KzZ-Pb-pwx" secondAttribute="trailing" constant="20" id="PrR-fH-Yr4"/>
+                        </constraints>
                     </view>
+                    <connections>
+                        <outlet property="mapView" destination="KzZ-Pb-pwx" id="JI6-3f-aTp"/>
+                    </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="20" y="94"/>
+            <point key="canvasLocation" x="18.840579710144929" y="93.75"/>
         </scene>
         <!--Photo Album Collection View Controller-->
         <scene sceneID="W5e-Q5-3xz">

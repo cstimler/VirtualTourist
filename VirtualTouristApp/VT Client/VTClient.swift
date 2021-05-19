@@ -13,6 +13,8 @@ class VTClient {
         static var apiKey = "PUT API KEY HERE"
     }
     
+    static var photoInfo:FlickrPhotosSearchResponse!
+    
     enum Endpoints {
         
         static let base = "http://www.flickr.com/services/rest"
@@ -29,7 +31,7 @@ class VTClient {
         }
     }
     
-    class func requestPhotosFromFlickr(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?) -> Void) {
+    class func requestPhotosList(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?) -> Void) {
         var request = URLRequest(url: Endpoints.getFlickrPhotosSearch(lat, lon, page, perPage).url)
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 5
@@ -44,7 +46,9 @@ class VTClient {
             do {
                 let decoder = JSONDecoder()
                 let responseObject = try decoder.decode(FlickrPhotosSearchResponse.self, from: data)
+                photoInfo = responseObject
                 DispatchQueue.main.async {
+                    
                     completion(true, nil)
                 }
             } catch {
