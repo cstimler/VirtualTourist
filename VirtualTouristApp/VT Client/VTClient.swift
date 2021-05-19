@@ -17,13 +17,16 @@ class VTClient {
     
     enum Endpoints {
         
-        static let base = "http://www.flickr.com/services/rest"
+        static let requestBase = "http://www.flickr.com/services/rest"
+        static let photosBase = "https://live.staticflickr.com"
         
         case getFlickrPhotosSearch(Double, Double, Int, Int)
+        case getPhotosDownload(String, String, String)
         
         var stringValue: String {
             switch self {
-            case .getFlickrPhotosSearch(let lat, let lon, let page, let perPage): return Endpoints.base + "/?&method=flickr.photos.search" + "&api_key=" + Auth.apiKey + "&lat=\(lat)&lon=\(lon)&radius=5 &per_page=\(perPage)&page=\(page)&format=json"
+            case .getFlickrPhotosSearch(let lat, let lon, let page, let perPage): return Endpoints.requestBase + "/?&method=flickr.photos.search" + "&api_key=" + Auth.apiKey + "&lat=\(lat)&lon=\(lon)&radius=5 &per_page=\(perPage)&page=\(page)&format=json"
+            case .getPhotosDownload(let server, let id, let secret): return Endpoints.photosBase + "/\(server)/\(id)_\(secret)_w.jpg"
             }
         }
         var url: URL {
@@ -58,6 +61,10 @@ class VTClient {
             }
         }
         task.resume()
+    }
+    
+    class func downloadPhotos(completion: @escaping (Bool, Error?) -> Void) {
+        
     }
     
     
