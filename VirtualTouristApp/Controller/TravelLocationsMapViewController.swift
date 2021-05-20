@@ -24,54 +24,35 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     @IBOutlet weak var mapView: MKMapView!
     
     func setUpFetchedResultsController(_ latitude: inout Double, _ longitude: inout Double) {
-        // setup pin to test:
- /*       let nextPin = Pin(context: dataController.viewContext)
-        nextPin.latitude = 44.8765
-        nextPin.longitude = -118.8765
-        try? dataController.viewContext.save() */
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
         latitude = roundToFourDecimalPlaces(latitude)
         longitude = roundToFourDecimalPlaces(longitude)
-    /*    let latitude2 = 44.8765
-        let longitude2 = -118.8765 */
         let lat1 = String(format: "%.4f", latitude)
         let lon1 = String(format: "%.4f", longitude)
         let predicate = NSPredicate(format: "latitude == \(lat1) AND longitude == \(lon1)")
         fetchRequest.predicate = predicate
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false)
         fetchRequest.sortDescriptors = [sortDescriptor]
-       // print(dataController.viewContext)
-        let result = try? dataController.viewContext.fetch(fetchRequest)
-        print("Here is my BRAND NEW fetch request:")
-        print(result)
+    //    let result = try? dataController.viewContext.fetch(fetchRequest)
         fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController.delegate = self
         do {
             try fetchedResultsController.performFetch()
-            print("The number of objects fetched is:")
-            print(fetchedResultsController.fetchedObjects?.count)
-            print(fetchedResultsController.fetchedObjects)
-            print("fetch performed!!!")
-            print("First object is:")
-         //   print(fetchedResultsController?.fetchedObjects?[0].latitude)
             if fetchedResultsController.fetchedObjects?.count == 0 {
-                print("CREATING A NEW PIN anyhow!")
                 let pin = Pin(context: dataController.viewContext)
                 // need to round off to 4 places to match accuracy of fetch request:
                 // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
                 pin.latitude = roundToFourDecimalPlaces(latitude)
                 pin.longitude = roundToFourDecimalPlaces(longitude)
-                print(pin)
+            //    print(pin)
                 do {
                     try dataController.viewContext.save()
-                    dataController.viewContext.processPendingChanges()
+            //        dataController.viewContext.processPendingChanges()
                 }
                 catch {
                     print("There is an error")
                     print(error)}
             } else {
-                print("PIN ALREADY EXISTS NOW!")
-                print("CREATING A NEW PIN anyhow!")
                 let pin = Pin(context: dataController.viewContext)
                 pin.latitude = latitude
                 pin.longitude = longitude

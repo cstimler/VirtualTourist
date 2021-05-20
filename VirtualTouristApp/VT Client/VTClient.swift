@@ -14,6 +14,7 @@ class VTClient {
     }
     
     static var photoInfo:FlickrPhotosSearchResponse!
+
     
     enum Endpoints {
         
@@ -35,7 +36,7 @@ class VTClient {
     }
     
     class func requestPhotosList(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?) -> Void) {
-        var request = URLRequest(url: Endpoints.getFlickrPhotosSearch(lat, lon, page, perPage).url)
+        let request = URLRequest(url: Endpoints.getFlickrPhotosSearch(lat, lon, page, perPage).url)
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 5
         let session = URLSession(configuration: configuration)
@@ -63,12 +64,31 @@ class VTClient {
         task.resume()
     }
     
-    class func downloadPhotos(completion: @escaping (Bool, Error?) -> Void) {
-        
+    class func downloadPhotos(dataController: DataController, pin: Pin, completion: @escaping (Bool, Error?) -> Void) {
+        for pic in photoInfo.photos.photo {
+            let request = URLRequest(url: Endpoints.getPhotosDownload(pic.server, pic.id, pic.secret).url)
+            
+            let configuration = URLSessionConfiguration.default
+            configuration.timeoutIntervalForRequest = 5
+            let session = URLSession(configuration: configuration)
+            let task = session.dataTask(with: request) {
+                data, response, error in
+                guard let data = data else {
+                    DispatchQueue.main.async {
+                        completion(false, error) }
+                        return
+                }
+                let photo = Photo(context: dataController.viewContext)
+                photo.file = data
+                photo.pin = pin
+                
+        }
+            task.resume()
     }
     
     
     
     
     
+}
 }
