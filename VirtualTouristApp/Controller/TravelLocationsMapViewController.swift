@@ -17,37 +17,78 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     
     var pin: Pin!
     
-    var fetchedResultsController:NSFetchedResultsController<Pin>?
+    var fetchedResultsController:NSFetchedResultsController<Pin>!
     
    // var myCLLocation: CLLocationCoordinate2D?
 
     @IBOutlet weak var mapView: MKMapView!
     
-    func setUpFetchedResultsController(_ latitude: Double = 0, _ longitude: Double = 0) {
+    func setUpFetchedResultsController(_ latitude: inout Double, _ longitude: inout Double) {
+        // setup pin to test:
+ /*       let nextPin = Pin(context: dataController.viewContext)
+        nextPin.latitude = 44.8765
+        nextPin.longitude = -118.8765
+        try? dataController.viewContext.save() */
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
-        let predicate = NSPredicate(format: "(pin.latitude == %f) AND (pin.longitude == %f)", latitude, longitude)
+        latitude = roundToFourDecimalPlaces(latitude)
+        longitude = roundToFourDecimalPlaces(longitude)
+    /*    let latitude2 = 44.8765
+        let longitude2 = -118.8765 */
+        let lat1 = String(format: "%.4f", latitude)
+        let lon1 = String(format: "%.4f", longitude)
+        let predicate = NSPredicate(format: "latitude == \(lat1) AND longitude == \(lon1)")
         fetchRequest.predicate = predicate
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: false)
+        fetchRequest.sortDescriptors = [sortDescriptor]
        // print(dataController.viewContext)
-        print(fetchRequest)
-        if dataController.viewContext == nil {
-            print("Data Controller context is nil")
-        } else {
-            print("Data Controller context is not nil")
-        }
-        if fetchRequest == nil {
-            print("fetchRequest is nil")
-        } else {
-            print("fetchRequest is not nil")
-        }
+        let result = try? dataController.viewContext.fetch(fetchRequest)
+        print("Here is my BRAND NEW fetch request:")
+        print(result)
         fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
-        fetchedResultsController?.delegate = self
+        fetchedResultsController.delegate = self
         do {
-            try fetchedResultsController?.performFetch()
+            try fetchedResultsController.performFetch()
+            print("The number of objects fetched is:")
+            print(fetchedResultsController.fetchedObjects?.count)
+            print(fetchedResultsController.fetchedObjects)
+            print("fetch performed!!!")
+            print("First object is:")
+         //   print(fetchedResultsController?.fetchedObjects?[0].latitude)
+            if fetchedResultsController.fetchedObjects?.count == 0 {
+                print("CREATING A NEW PIN anyhow!")
+                let pin = Pin(context: dataController.viewContext)
+                // need to round off to 4 places to match accuracy of fetch request:
+                // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
+                pin.latitude = roundToFourDecimalPlaces(latitude)
+                pin.longitude = roundToFourDecimalPlaces(longitude)
+                print(pin)
+                do {
+                    try dataController.viewContext.save()
+                    dataController.viewContext.processPendingChanges()
+                }
+                catch {
+                    print("There is an error")
+                    print(error)}
+            } else {
+                print("PIN ALREADY EXISTS NOW!")
+                print("CREATING A NEW PIN anyhow!")
+                let pin = Pin(context: dataController.viewContext)
+                pin.latitude = latitude
+                pin.longitude = longitude
+                print(pin)
+                do {
+                    try dataController.viewContext.save() }
+                catch {print(error)}
+            }
         } catch {
             print("Unable to fetch: \(error.localizedDescription)")
         }
     }
     
+    // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
+    func roundToFourDecimalPlaces(_ number: Double) -> Double {
+        return (number*10000).rounded()/10000
+    }
 
     func getStartingRegionForMap() {
         // if this is the first launch the following code will do nothing and the map will open with its default location:
@@ -77,7 +118,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
         getStartingRegionForMap()
         
         
-        // Do any additional setup after loading the view.
+        
     }
     
     
@@ -111,9 +152,9 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     //obtains latitude and longitude after pin tap in order to compare with "Pin" data
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         print("Did select annotation view.")
-        let latitude = view.annotation!.coordinate.latitude
-        let longitude = view.annotation!.coordinate.longitude
-        setUpFetchedResultsController(latitude, longitude)
+        var latitude = view.annotation!.coordinate.latitude
+        var longitude = view.annotation!.coordinate.longitude
+        setUpFetchedResultsController(&latitude, &longitude)
         
     }
     
