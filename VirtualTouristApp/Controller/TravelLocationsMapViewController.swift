@@ -14,8 +14,10 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     var dataController:DataController!
     
     var locationManager = CLLocationManager()
-    
+    // this is the "pin" which will be passed to the next view controller (PhotoAlbumCollectionView):
     var pin: Pin!
+    
+    var isNewPin: Bool = false
     
     var fetchedResultsController:NSFetchedResultsController<Pin>!
     
@@ -23,8 +25,35 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
 
     @IBOutlet weak var mapView: MKMapView!
     
+    // load pins that had been placed in a previous session:
+    func loadOldPins() {
+        var pins:[Pin]
+        var annotations = [MKPointAnnotation]()
+        let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
+        let sortDescriptork = NSSortDescriptor(key: "creationDate", ascending: true)
+        do {
+            pins = try dataController.viewContext.fetch(fetchRequest)
+        } catch {
+            // There are no old pins?
+            print(error)
+            return
+        }
+        if pins.count == 0 {return}
+        for pin in pins {
+            let lat = CLLocationDegrees(pin.latitude)
+            let long = CLLocationDegrees(pin.longitude)
+            let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: long)
+            let annotation = MKPointAnnotation()
+            annotation.coordinate = coordinate
+            annotations.append(annotation)
+        }
+        self.mapView.addAnnotations(annotations)
+        
+    }
+    
     func setUpFetchedResultsController(_ latitude: inout Double, _ longitude: inout Double) {
         let fetchRequest:NSFetchRequest<Pin> = Pin.fetchRequest()
+        // must be sure that the floats are formatted in a reproducible manner:
         latitude = roundToFourDecimalPlaces(latitude)
         longitude = roundToFourDecimalPlaces(longitude)
         let lat1 = String(format: "%.4f", latitude)
@@ -39,31 +68,35 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
         do {
             try fetchedResultsController.performFetch()
             if fetchedResultsController.fetchedObjects?.count == 0 {
+                // this is a new pin so lets create it, put it on the map, and save it globally
                 let pin = Pin(context: dataController.viewContext)
                 // need to round off to 4 places to match accuracy of fetch request:
                 // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
+                // rounding may be redundant as this has already been done above:
                 pin.latitude = roundToFourDecimalPlaces(latitude)
                 pin.longitude = roundToFourDecimalPlaces(longitude)
-            //    print(pin)
+                print(pin) // debugging
                 do {
+                    // update the context:
                     try dataController.viewContext.save()
+                    // save the local pin as class variable to be passed to next vc
+                    self.pin = pin
             //        dataController.viewContext.processPendingChanges()
+                    isNewPin = true
                 }
                 catch {
                     print("There is an error")
                     print(error)}
             } else {
-                let pin = Pin(context: dataController.viewContext)
-                pin.latitude = latitude
-                pin.longitude = longitude
-                print(pin)
-                do {
-                    try dataController.viewContext.save() }
-                catch {print(error)}
-            }
+                // pin is an "old" pin since it was obtained by the fetch above; let's just pass it into the global variable to be sent to the next vc
+                pin = fetchedResultsController.fetchedObjects?[0]
+    }
         } catch {
-            print("Unable to fetch: \(error.localizedDescription)")
+            print(error)
         }
+        
+        // either way we must segue to the next vc:
+        performSegue(withIdentifier: "fromMapToPhotos", sender: self)
     }
     
     // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
@@ -97,6 +130,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
         tapAndPress.minimumPressDuration = 2
         mapView.addGestureRecognizer(tapAndPress)
         getStartingRegionForMap()
+        loadOldPins()
         
         
         
@@ -157,5 +191,15 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
         }
         
         
+    }
+    
+    //Navigation
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let controller = segue.destination as! PhotoAlbumCollectionViewController
+        
+        controller.dataController = self.dataController
+        controller.pin = self.pin
+        controller.isNewPin = self.isNewPin
     }
 }

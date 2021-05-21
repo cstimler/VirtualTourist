@@ -6,14 +6,36 @@
 //
 
 import UIKit
+import CoreData
 
 private let reuseIdentifier = "PhotoCell"
 
-class PhotoAlbumCollectionViewController: UICollectionViewController {
+class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedResultsControllerDelegate {
+    
+    var pin: Pin!
+    
+    var isNewPin: Bool!
+    
+    var fetchedResultsController:NSFetchedResultsController<Photo>!
     
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     
     var dataController:DataController!
+    
+    func setupFetchedResultsController() {
+        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+        let predicate = NSPredicate(format: "pin == %@", pin)
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)")
+        fetchedResultsController.delegate = self
+        do {
+            try fetchedResultsController.performFetch()
+        } catch {
+            fatalError("Unable to fetch: \(error.localizedDescription)")
+        }
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -22,6 +44,7 @@ class PhotoAlbumCollectionViewController: UICollectionViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(pin)
         
         if UIDevice.current.orientation.isLandscape {
                 let space:CGFloat = 3.0
@@ -84,27 +107,51 @@ class PhotoAlbumCollectionViewController: UICollectionViewController {
        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
+    func addPhotosToNewPin(isNewPin: Bool) {
+        if !isNewPin {
+            self.setupFetchedResultsController()
+        }
+        else {
+            VTClient.requestPhotosList(lat: pin.latitude, lon: pin.longitude, page: 1, perPage: 15) { (success, error) in
+                if success {
+                    VTClient.downloadPhotos(dataController: self.dataController, pin: self.pin) { (success, error) in
+                        if success {
+                            self.setupFetchedResultsController()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     
 
     // MARK: UICollectionViewDataSource
-/*
+
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return 0
+        //return the number of sections
+        return fetchedResultsController.sections?.count ?? 1
     }
-*/
+
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        // #warning Incomplete implementation, return the number of items
-        return 0
+        // return the number of items
+        return fetchedResultsController.sections?[section].numberOfObjects ?? 0
     }
 
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let aPhoto = fetchedResultsController.object(at: indexPath)
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
     
         // Configure the cell
-    
+        let myFile = aPhoto.file
+        if let myFile = myFile {
+        cell.photoCell.image = UIImage(data: myFile)
+        }
         return cell
+    }
+    
+    override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
     }
 
     // MARK: UICollectionViewDelegate
