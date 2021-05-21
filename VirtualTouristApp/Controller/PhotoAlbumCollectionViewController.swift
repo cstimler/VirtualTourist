@@ -144,7 +144,12 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         }
     }
     
-    
+    func deletePhoto(at indexPath: IndexPath) {
+        let photoToDelete = fetchedResultsController?.object(at: indexPath)
+        if let photoToDelete = photoToDelete {
+            dataController.viewContext.delete(photoToDelete) }
+        try? dataController.viewContext.save()
+    }
 
     // MARK: UICollectionViewDataSource
 
@@ -157,14 +162,16 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         // return the number of items
         return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
+       
     }
-
+// https://stackoverflow.com/questions/24231680/loading-downloading-image-from-url-on-swift/51746517#51746517
+    
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let aPhoto = fetchedResultsController?.object(at: indexPath)
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
     
         // Configure the cell
-        
+        cell.photoCell.image = UIImage(named: "VirtualTourist_180")
         let myFile = aPhoto?.file
         if let myFile = myFile {
         cell.photoCell.image = UIImage(data: myFile)
@@ -173,6 +180,8 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        deletePhoto(at: indexPath)
+        self.loadView()
     }
 
     // MARK: UICollectionViewDelegate

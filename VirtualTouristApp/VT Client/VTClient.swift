@@ -96,7 +96,7 @@ class VTClient {
                 let photo = Photo(context: dataController.viewContext)
                 photo.file = data
                 photo.pin = pin
-                // sending the completion each time refreshes the download, I think.
+                // sending the completion each time the task runs refreshes the download, I think.
                 DispatchQueue.main.async {
             print("SENDING THE COMPLETION NOW")
             completion(true, nil)

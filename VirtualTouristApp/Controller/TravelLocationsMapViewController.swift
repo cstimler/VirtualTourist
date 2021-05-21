@@ -90,6 +90,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
             } else {
                 // pin is an "old" pin since it was obtained by the fetch above; let's just pass it into the global variable to be sent to the next vc
                 pin = fetchedResultsController.fetchedObjects?[0]
+                isNewPin = false
     }
         } catch {
             print(error)
