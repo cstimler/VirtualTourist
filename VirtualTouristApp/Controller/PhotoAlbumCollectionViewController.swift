@@ -16,29 +16,39 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     var isNewPin: Bool!
     
-    var fetchedResultsController:NSFetchedResultsController<Photo>!
+    var fetchedResultsController:NSFetchedResultsController<Photo>?
     
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     
     var dataController:DataController!
     
     func setupFetchedResultsController() {
+        print("ENTERED FETCHED resULSTs Controller!!!!")
         let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
         fetchRequest.predicate = predicate
         fetchRequest.sortDescriptors = [sortDescriptor]
-        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: "\(pin)")
-        fetchedResultsController.delegate = self
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, //cacheName: "\(pin)") caused crashes
+                                                              cacheName: nil)
+        fetchedResultsController?.delegate = self
         do {
-            try fetchedResultsController.performFetch()
+            try fetchedResultsController?.performFetch()
         } catch {
             fatalError("Unable to fetch: \(error.localizedDescription)")
         }
     }
+    // Obtained at: https://stackoverflow.com/questions/39620217/nsfetchedresultscontroller-couldnt-read-cache-file-to-update-store-info-time
+    // NSFetchedResultsController change tracking methods
+        func controllerDidChangeContent(_ controller:
+    NSFetchedResultsController<NSFetchRequestResult>) {
+            // empty: see documentation
+        }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        // setupFetchedResultsController()
+        addPhotosToNewPin(isNewPin: isNewPin)
         self.loadView()
     }
     
@@ -108,18 +118,28 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     }
     
     func addPhotosToNewPin(isNewPin: Bool) {
+        print("Gets to addPhotosToNewPin")
         if !isNewPin {
+            print("1b")
             self.setupFetchedResultsController()
         }
         else {
+            print("Gets to else clause")
             VTClient.requestPhotosList(lat: pin.latitude, lon: pin.longitude, page: 1, perPage: 15) { (success, error) in
                 if success {
+                    print("2b")
                     VTClient.downloadPhotos(dataController: self.dataController, pin: self.pin) { (success, error) in
                         if success {
+                            print("reached completion in the addtophotos")
                             self.setupFetchedResultsController()
+                            self.loadView()
+                        } else {
+                            print("reached error in photos")
                         }
                     }
-                }
+                } else {
+                    print("reached error in photo list")
+                    print(error)}
             }
         }
     }
@@ -130,21 +150,22 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         //return the number of sections
-        return fetchedResultsController.sections?.count ?? 1
+        return fetchedResultsController?.sections?.count ?? 1
     }
 
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         // return the number of items
-        return fetchedResultsController.sections?[section].numberOfObjects ?? 0
+        return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
     }
 
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let aPhoto = fetchedResultsController.object(at: indexPath)
+        let aPhoto = fetchedResultsController?.object(at: indexPath)
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
     
         // Configure the cell
-        let myFile = aPhoto.file
+        
+        let myFile = aPhoto?.file
         if let myFile = myFile {
         cell.photoCell.image = UIImage(data: myFile)
         }

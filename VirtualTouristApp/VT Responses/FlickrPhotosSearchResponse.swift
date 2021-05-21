@@ -11,7 +11,7 @@ struct Photos: Codable {
     var id: String
     var secret: String
     var server: String
-    var farm: String
+    var farm: Int
     
     enum CodingKeys: String, CodingKey {
         case id

@@ -99,6 +99,14 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
         performSegue(withIdentifier: "fromMapToPhotos", sender: self)
     }
     
+    
+    // Obtained at: https://stackoverflow.com/questions/39620217/nsfetchedresultscontroller-couldnt-read-cache-file-to-update-store-info-time
+    // NSFetchedResultsController change tracking methods
+        func controllerDidChangeContent(_ controller:
+    NSFetchedResultsController<NSFetchRequestResult>) {
+            // empty: see documentation
+        }
+    
     // https://stackoverflow.com/questions/34929932/round-up-double-to-2-decimal-places
     func roundToFourDecimalPlaces(_ number: Double) -> Double {
         return (number*10000).rounded()/10000
