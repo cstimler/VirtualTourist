@@ -79,7 +79,17 @@
                             <outlet property="delegate" destination="GGJ-n3-5Z9" id="b9g-wf-wHm"/>
                         </connections>
                     </collectionView>
+                    <toolbarItems>
+                        <barButtonItem style="plain" systemItem="flexibleSpace" id="egg-2e-USo"/>
+                        <barButtonItem title="New Collection" id="EeT-eV-gPV">
+                            <connections>
+                                <action selector="initiateNewCollection:" destination="GGJ-n3-5Z9" id="kcq-qa-7en"/>
+                            </connections>
+                        </barButtonItem>
+                        <barButtonItem style="plain" systemItem="flexibleSpace" id="lee-3s-1R9"/>
+                    </toolbarItems>
                     <navigationItem key="navigationItem" id="qff-hx-28s"/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <connections>
                         <outlet property="flowLayout" destination="3A2-cA-1XZ" id="B5N-Nf-Yud"/>
                     </connections>
@@ -91,13 +101,18 @@
         <!--Navigation Controller-->
         <scene sceneID="KUf-qa-1ex">
             <objects>
-                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="GHc-zL-90J" sceneMemberID="viewController">
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" toolbarHidden="NO" id="GHc-zL-90J" sceneMemberID="viewController">
                     <toolbarItems/>
+                    <simulatedToolbarMetrics key="simulatedBottomBarMetrics"/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" id="Q7D-RR-42H">
                         <rect key="frame" x="0.0" y="44" width="414" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                     </navigationBar>
                     <nil name="viewControllers"/>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="4en-eP-Qfk">
+                        <rect key="frame" x="0.0" y="813" width="414" height="49"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </toolbar>
                     <connections>
                         <segue destination="BYZ-38-t0r" kind="relationship" relationship="rootViewController" id="aew-Ve-LMg"/>
                     </connections>

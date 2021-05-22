@@ -22,6 +22,71 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     var dataController:DataController!
     
+    var numOfPhotos: Int = 15
+    
+    
+    @IBAction func initiateNewCollection(_ sender: Any) {
+        var arrayOfFetches: [Photo]
+        var objectIDs = [NSManagedObjectID]()
+        var indexPaths = [IndexPath]()
+        let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
+        let predicate = NSPredicate(format: "pin == %@", pin)
+        let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
+        fetchRequest.predicate = predicate
+        fetchRequest.sortDescriptors = [sortDescriptor]
+        do {
+            arrayOfFetches = try dataController.viewContext.fetch(fetchRequest)
+        } catch {
+            fatalError("Unable to fetch: \(error.localizedDescription)")
+        }
+        for photo in arrayOfFetches {
+            print(photo)
+            objectIDs.append(photo.objectID)
+        }
+        fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
+        fetchedResultsController?.delegate = self
+        do {
+            try fetchedResultsController?.performFetch()
+        } catch {
+            fatalError("Unable to fetch: \(error.localizedDescription)")
+        }
+        print("11111")
+        var test1: [Photo]
+        test1 = fetchedResultsController?.fetchedObjects ?? []
+        print("22222")
+        for photo in test1 {
+            indexPaths.append((fetchedResultsController?.indexPath(forObject: photo)!)!)
+            print("33333")
+        }
+        
+        for photo in arrayOfFetches {
+            print("44444")
+            print(photo)
+            indexPaths.append((fetchedResultsController?.indexPath(forObject: photo)!)!)
+        }
+        for obj in objectIDs {
+            print("55555")
+            print(indexPaths.count)
+            print(objectIDs.count)
+            deletePhoto(at: IndexPath(item: 0, section: 0))
+        }
+        self.loadView()
+    }
+    
+    
+    func clearAndReloadPins(_ sender: Any) {
+        // https://www.generacodice.com/en/articolo/177795/DeleteReset-all-entries-in-Core-Data:
+        // useful for resetting program in preparation for submission: erases all Pins from plist as well as Photo (because Pin is a one-to-many "cascading" relationship)
+        
+        let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Pin")
+        let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
+        do {
+            try dataController.viewContext.execute(deleteRequest)
+        }
+        catch {
+            print(error)
+        }
+    }
     func setupFetchedResultsController() {
         print("ENTERED FETCHED resULSTs Controller!!!!")
         let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
@@ -49,7 +114,9 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         super.viewWillAppear(animated)
         // setupFetchedResultsController()
         addPhotosToNewPin(isNewPin: isNewPin)
+        print("before self loadview")
         self.loadView()
+        print("after self loadview")
     }
     
     override func viewDidLoad() {
@@ -144,6 +211,12 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         }
     }
     
+    func decrementNumberOfPhotosInCollectionView() {
+        var localPhotoNum = numOfPhotos
+        localPhotoNum = localPhotoNum - 1
+        numOfPhotos = localPhotoNum
+    }
+    
     func deletePhoto(at indexPath: IndexPath) {
         let photoToDelete = fetchedResultsController?.object(at: indexPath)
         if let photoToDelete = photoToDelete {
@@ -155,19 +228,24 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
         //return the number of sections
-        return fetchedResultsController?.sections?.count ?? 1
+     //   return fetchedResultsController?.sections?.count ?? 1
+        return 1
     }
 
 
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         // return the number of items
-        return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
-       
+     //   new pins should show the placeholders, old pins should not!
+        if isNewPin {
+            return numOfPhotos
+        } else {
+            return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
+        }
     }
 // https://stackoverflow.com/questions/24231680/loading-downloading-image-from-url-on-swift/51746517#51746517
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        let aPhoto = fetchedResultsController?.object(at: indexPath)
+  /*      let aPhoto = fetchedResultsController?.object(at: indexPath)
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
     
         // Configure the cell
@@ -175,12 +253,24 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         let myFile = aPhoto?.file
         if let myFile = myFile {
         cell.photoCell.image = UIImage(data: myFile)
+          }
+        return cell   */
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
+        cell.photoCell.image = UIImage(named: "VirtualTourist_180")
+        if indexPath.item < fetchedResultsController?.sections?[0].numberOfObjects ?? 0 {
+            let aPhoto = fetchedResultsController?.object(at: indexPath)
+            let myFile = aPhoto?.file
+            if let myFile = myFile {
+            cell.photoCell.image = UIImage(data: myFile)
+              }
         }
         return cell
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         deletePhoto(at: indexPath)
+        // this avoids the appearance of placeholders as photos are deleted from the collection view:
+        decrementNumberOfPhotosInCollectionView()   
         self.loadView()
     }
 
