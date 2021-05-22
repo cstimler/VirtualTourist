@@ -24,6 +24,8 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     var numOfPhotos: Int = 15
     
+    var pages = 1
+    
     
     @IBAction func initiateNewCollection(_ sender: Any) {
         var arrayOfFetches: [Photo]
@@ -71,6 +73,8 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
             deletePhoto(at: IndexPath(item: 0, section: 0))
         }
         self.loadView()
+        isNewPin = true
+        addPhotosToNewPin(isNewPin: isNewPin)
     }
     
     
@@ -117,6 +121,11 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         print("before self loadview")
         self.loadView()
         print("after self loadview")
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        try? dataController.viewContext.save()
     }
     
     override func viewDidLoad() {
@@ -184,6 +193,11 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
        NotificationCenter.default.removeObserver(self, name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
+    // taken from: https://learnappmaking.com/random-numbers-swift/
+    func random(_ n:Int) -> Int {
+        return Int(arc4random_uniform(UInt32(n)))
+    }
+    
     func addPhotosToNewPin(isNewPin: Bool) {
         print("Gets to addPhotosToNewPin")
         if !isNewPin {
@@ -192,9 +206,26 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         }
         else {
             print("Gets to else clause")
-            VTClient.requestPhotosList(lat: pin.latitude, lon: pin.longitude, page: 1, perPage: 15) { (success, error) in
+            var randNum: Int = 1
+            if pages > 2 {
+                let limit = pages - 1
+              randNum = random(limit) + 1
+            }
+            VTClient.requestPhotosList(lat: pin.latitude, lon: pin.longitude, page: randNum, perPage: 15) { (success, error, pages, numPhotos) in
                 if success {
                     print("2b")
+                    // saves the number of pages (of 15 photos each) that exists in the Flickr repository
+                    self.pages = pages
+                    if numPhotos < 15 {
+                        // we should decrease the number of placeholders if there are less than 15 total photos available:
+                    self.numOfPhotos = numPhotos
+                    } else {
+                        // resets to default of 15 if we had deleted some photos from the
+                        self.numOfPhotos = 15
+                    }
+                    if numPhotos == 0 {
+                        self.showMapFailure(message: "Sorry but there are no photos available to show at this location!")
+                    }
                     VTClient.downloadPhotos(dataController: self.dataController, pin: self.pin) { (success, error) in
                         if success {
                             print("reached completion in the addtophotos")
@@ -274,6 +305,14 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         self.loadView()
     }
 
+    func showMapFailure(message: String) {
+        DispatchQueue.main.async {
+        let alertVC = UIAlertController(title: "NO PHOTOS!", message: message, preferredStyle: .alert)
+        alertVC.addAction(UIAlertAction(title: "OK", style: .default))
+            self.present(alertVC, animated: true, completion: nil)
+    }
+    }
+}
     // MARK: UICollectionViewDelegate
 
     /*
@@ -305,4 +344,4 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     }
     */
 
-}
+

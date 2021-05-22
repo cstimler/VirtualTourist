@@ -37,7 +37,7 @@ class VTClient {
         }
     }
     
-    class func requestPhotosList(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?) -> Void) {
+    class func requestPhotosList(lat: Double, lon: Double, page: Int, perPage: Int, completion: @escaping (Bool, Error?, Int, Int) -> Void) {
         print("1111")
         print(Endpoints.getFlickrPhotosSearch(lat, lon, page, perPage).url)
         print("1122")
@@ -45,7 +45,7 @@ class VTClient {
         print("2222")
         let configuration = URLSessionConfiguration.default
         print("3a")
-        configuration.timeoutIntervalForRequest = 5
+        configuration.timeoutIntervalForRequest = 10
         print("4a")
         let session = URLSession(configuration: configuration)
         print("5a")
@@ -55,21 +55,23 @@ class VTClient {
             guard let data = data else {
                 DispatchQueue.main.async {
                     print("Error #1")
-                    completion(false, error) }
+                    completion(false, error, -1, -1) }
                     return
             }
             do {
                 let decoder = JSONDecoder()
                 let responseObject = try decoder.decode(FlickrPhotosSearchResponse.self, from: data)
                 photoInfo = responseObject
+                let pages = photoInfo.photos.pages
+                let numPhotos = photoInfo.photos.total
                 DispatchQueue.main.async {
                     print("Non-error #2")
-                    completion(true, nil)
+                    completion(true, nil, pages, numPhotos)
                 }
             } catch {
                 DispatchQueue.main.async {
                     print("Error #2!")
-                    completion(false, error)
+                    completion(false, error, -1, -1)
                 }
             }
         }
@@ -83,7 +85,7 @@ class VTClient {
             let request = URLRequest(url: Endpoints.getPhotosDownload(pic.server, pic.id, pic.secret).url)
             print("4444")
             let configuration = URLSessionConfiguration.default
-            configuration.timeoutIntervalForRequest = 5
+            configuration.timeoutIntervalForRequest = 10
             let session = URLSession(configuration: configuration)
             let task = session.dataTask(with: request) {
                 data, response, error in

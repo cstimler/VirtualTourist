@@ -76,12 +76,12 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
                 pin.latitude = roundToFourDecimalPlaces(latitude)
                 pin.longitude = roundToFourDecimalPlaces(longitude)
                 print(pin) // debugging
+                dataController.viewContext.processPendingChanges() // needs to catch up!
                 do {
                     // update the context:
                     try dataController.viewContext.save()
                     // save the local pin as class variable to be passed to next vc
                     self.pin = pin
-            //        dataController.viewContext.processPendingChanges()
                     isNewPin = true
                 }
                 catch {
@@ -148,6 +148,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        try? dataController.viewContext.save()
         storeEndMapLocationAndZoom()
     }
     
