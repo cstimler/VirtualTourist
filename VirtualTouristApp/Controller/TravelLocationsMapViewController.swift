@@ -75,7 +75,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
                 // rounding may be redundant as this has already been done above:
                 pin.latitude = roundToFourDecimalPlaces(latitude)
                 pin.longitude = roundToFourDecimalPlaces(longitude)
-                print(pin) // debugging
+                // print(pin) // debugging
                 dataController.viewContext.processPendingChanges() // needs to catch up!
                 do {
                     // update the context:
@@ -176,7 +176,7 @@ class TravelLocationsMapViewController: UIViewController, MKMapViewDelegate, CLL
     
     //obtains latitude and longitude after pin tap in order to compare with "Pin" data
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        print("Did select annotation view.")
+        
         var latitude = view.annotation!.coordinate.latitude
         var longitude = view.annotation!.coordinate.longitude
         setUpFetchedResultsController(&latitude, &longitude)

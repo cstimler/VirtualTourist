@@ -15,20 +15,9 @@ class DataController {
         return persistentContainer.viewContext
     }
     
-    var backgroundContext:NSManagedObjectContext!
     
     init(modelName:String) {
         persistentContainer = NSPersistentContainer(name: modelName)
-    }
-    
-    func configureContexts() {
-        backgroundContext = persistentContainer.newBackgroundContext()
-        
-    //    viewContext.automaticallyMergesChangesFromParent = true
-        backgroundContext.automaticallyMergesChangesFromParent = true
-        
-        backgroundContext.mergePolicy = NSMergePolicy.mergeByPropertyObjectTrump
-   //     viewContext.mergePolicy = NSMergePolicy.mergeByPropertyStoreTrump
     }
     
     
@@ -39,7 +28,6 @@ class DataController {
             }
             // now this is after the container has loaded the persistent store in this handler:
             self.autoSaveViewContext()
-            self.configureContexts()
             completion?()
         }
     }

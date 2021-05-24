@@ -20,17 +20,26 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     @IBOutlet weak var flowLayout: UICollectionViewFlowLayout!
     
+    @IBOutlet weak var newCollectionButton: UIBarButtonItem!
+    
     var dataController:DataController!
     
     var numOfPhotos: Int = 15
     
     var pages = 1
     
+    var fetchNumber: Int = 0
+    
     
     @IBAction func initiateNewCollection(_ sender: Any) {
         var arrayOfFetches: [Photo]
         var objectIDs = [NSManagedObjectID]()
-        var indexPaths = [IndexPath]()
+      //  var indexPaths = [IndexPath]()
+        
+        // disable Collection Button and reset fetchNumber at the start of a refresh of photos (when fetch number reaches numOfPhotos we can re-enable the "New Collection" button):
+        newCollectionButton.isEnabled = false
+        fetchNumber = 0
+        // fetch all current photos in display:
         let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
@@ -41,10 +50,12 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         } catch {
             fatalError("Unable to fetch: \(error.localizedDescription)")
         }
+        // get a list of object ids in order to know exactly how many photos there are:
         for photo in arrayOfFetches {
             print(photo)
             objectIDs.append(photo.objectID)
         }
+        // in order to delete properly from the viewController, we will need to repeat the fetch with a fetchedResultsController:
         fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: dataController.viewContext, sectionNameKeyPath: nil, cacheName: nil)
         fetchedResultsController?.delegate = self
         do {
@@ -52,24 +63,23 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         } catch {
             fatalError("Unable to fetch: \(error.localizedDescription)")
         }
-        print("11111")
+       /*
         var test1: [Photo]
         test1 = fetchedResultsController?.fetchedObjects ?? []
-        print("22222")
+        
         for photo in test1 {
             indexPaths.append((fetchedResultsController?.indexPath(forObject: photo)!)!)
-            print("33333")
+            
         }
         
         for photo in arrayOfFetches {
-            print("44444")
-            print(photo)
+            
+           // print(photo) - debugging point
             indexPaths.append((fetchedResultsController?.indexPath(forObject: photo)!)!)
-        }
+        }   */
+        // we don't use the "obj" below, but we use the number of objects so that we repeat the for-if the correct number of times:
         for obj in objectIDs {
-            print("55555")
-            print(indexPaths.count)
-            print(objectIDs.count)
+            // below was from some trial and error, but it makes sense that as objects are deleted the list is pared from right to left with empty places filled in by objects from the right, so the object at the very start position is the last to go:
             deletePhoto(at: IndexPath(item: 0, section: 0))
         }
         self.loadView()
@@ -77,10 +87,10 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         addPhotosToNewPin(isNewPin: isNewPin)
     }
     
-    
+    // I don't use this function in the app, but it can be very useful to reset the entire persistent memory, so I leave it here for future reference:
     func clearAndReloadPins(_ sender: Any) {
         // https://www.generacodice.com/en/articolo/177795/DeleteReset-all-entries-in-Core-Data:
-        // useful for resetting program in preparation for submission: erases all Pins from plist as well as Photo (because Pin is a one-to-many "cascading" relationship)
+        // useful for resetting program: erases all Pins from plist as well as Photo (because Pin is a one-to-many "cascading" relationship)
         
         let fetchRequest = NSFetchRequest<NSFetchRequestResult>(entityName: "Pin")
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -91,8 +101,10 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
             print(error)
         }
     }
+    
+    
     func setupFetchedResultsController() {
-        print("ENTERED FETCHED resULSTs Controller!!!!")
+
         let fetchRequest:NSFetchRequest<Photo> = Photo.fetchRequest()
         let predicate = NSPredicate(format: "pin == %@", pin)
         let sortDescriptor = NSSortDescriptor(key: "creationDate", ascending: true)
@@ -103,6 +115,8 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         fetchedResultsController?.delegate = self
         do {
             try fetchedResultsController?.performFetch()
+            // good place to turn back on enabling of "New Collection" button when the final "setupFetchedResultsController" has completed running:
+            countNumberOfFetches()
         } catch {
             fatalError("Unable to fetch: \(error.localizedDescription)")
         }
@@ -116,11 +130,10 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        // setupFetchedResultsController()
+        // Disable "New Collections" button here while the photos are being added:
+        newCollectionButton.isEnabled = false
         addPhotosToNewPin(isNewPin: isNewPin)
-        print("before self loadview")
         self.loadView()
-        print("after self loadview")
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -130,63 +143,51 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        print(pin)
-        
-        if UIDevice.current.orientation.isLandscape {
-                let space:CGFloat = 3.0
-            let dimension = (view.frame.size.width - (5*space))/6.0
-                flowLayout.minimumInteritemSpacing = space
-                flowLayout.minimumLineSpacing = space
-                    flowLayout.itemSize = CGSize(width:dimension, height:dimension)
-            
-        } else {      // unfortunately this includes upside down
-             
-                
-                let space:CGFloat = 3.0
-            let dimension = (view.frame.size.width - (2*space))/3.0
-                flowLayout.minimumInteritemSpacing = space
-                flowLayout.minimumLineSpacing = space
-                    flowLayout.itemSize = CGSize(width:dimension, height:dimension)
-            
-        }
-        
-        // callNotificationsAdd() here or in other event??
-
+       // print(pin)
+        mathForCalculatingCollectionViewCell()
+        // this notification might be redundant now that the viewController spacing is handled by the extension at the very bottom of the page
+        callNotificationAdd()
      
     }
 
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using [segue destinationViewController].
-        // Pass the selected object to the new view controller.
+    func countNumberOfFetches() {
+        fetchNumber = fetchNumber + 1
+        if fetchNumber == numOfPhotos {
+            newCollectionButton.isEnabled = true
+        }
     }
-    */
     
     func callNotificationAdd() {
         NotificationCenter.default.addObserver(self, selector: #selector(rotated), name: UIDevice.orientationDidChangeNotification, object: nil)
     }
     
     @objc func rotated(_notification: Notification) {
-               if UIDevice.current.orientation.isLandscape {
-                       let space:CGFloat = 3.0
-                let dimension = (view.frame.size.width - (5*space))/6.0
-                       flowLayout.minimumInteritemSpacing = space
-                       flowLayout.minimumLineSpacing = space
-                           flowLayout.itemSize = CGSize(width:dimension, height:dimension)
-                   
-               } else {
-                    
-                       
-                       let space:CGFloat = 3.0
-                let dimension = (view.frame.size.width - (2*space))/3.0
-                       flowLayout.minimumInteritemSpacing = space
-                       flowLayout.minimumLineSpacing = space
-                           flowLayout.itemSize = CGSize(width:dimension, height:dimension)
-                   
-               }
+               mathForCalculatingCollectionViewCell()
+    }
+    
+    // boilerplate for fitting images nicely into collection view (take from earlier Udacity provided code):
+    func mathForCalculatingCollectionViewCell() -> CGFloat {
+        var dimension: CGFloat
+        
+        if UIDevice.current.orientation.isLandscape {
+                let space:CGFloat = 3.0
+         dimension = (view.frame.size.width - (5*space))/6.0
+                flowLayout.minimumInteritemSpacing = space
+                flowLayout.minimumLineSpacing = space
+                    flowLayout.itemSize = CGSize(width:dimension, height:dimension)
+            
+        } else {
+             
+                
+                let space:CGFloat = 3.0
+         dimension = (view.frame.size.width - (2*space))/3.0
+                flowLayout.minimumInteritemSpacing = space
+                flowLayout.minimumLineSpacing = space
+                    flowLayout.itemSize = CGSize(width:dimension, height:dimension)
+            
+            
+        }
+        return dimension
     }
     
     deinit {
@@ -199,13 +200,12 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     }
     
     func addPhotosToNewPin(isNewPin: Bool) {
-        print("Gets to addPhotosToNewPin")
         if !isNewPin {
-            print("1b")
             self.setupFetchedResultsController()
+            // Re-enable "New Controller" button here for "old pins":
+            newCollectionButton.isEnabled = true
         }
         else {
-            print("Gets to else clause")
             var randNum: Int = 1
             if pages > 2 {
                 let limit = pages - 1
@@ -213,22 +213,22 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
             }
             VTClient.requestPhotosList(lat: pin.latitude, lon: pin.longitude, page: randNum, perPage: 15) { (success, error, pages, numPhotos) in
                 if success {
-                    print("2b")
                     // saves the number of pages (of 15 photos each) that exists in the Flickr repository
                     self.pages = pages
                     if numPhotos < 15 {
                         // we should decrease the number of placeholders if there are less than 15 total photos available:
                     self.numOfPhotos = numPhotos
                     } else {
-                        // resets to default of 15 if we had deleted some photos from the
+                        // resets to default of 15 if we had deleted some photos from the old set (in case we are refreshing using the "New Collection" button) using decrementNumberOfPhotosInCollectionView:
                         self.numOfPhotos = 15
                     }
+                    // provide a message if there are no photos to display:
                     if numPhotos == 0 {
                         self.showMapFailure(message: "Sorry but there are no photos available to show at this location!")
                     }
                     VTClient.downloadPhotos(dataController: self.dataController, pin: self.pin) { (success, error) in
                         if success {
-                            print("reached completion in the addtophotos")
+                           
                             self.setupFetchedResultsController()
                             self.loadView()
                         } else {
@@ -242,6 +242,7 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         }
     }
     
+    // lower the number of items in the collection view (via "numberOfItemsInSection") in order to prevent a default "placeholder" from appearing after a photo is deleted:
     func decrementNumberOfPhotosInCollectionView() {
         var localPhotoNum = numOfPhotos
         localPhotoNum = localPhotoNum - 1
@@ -258,7 +259,6 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     // MARK: UICollectionViewDataSource
 
     override func numberOfSections(in collectionView: UICollectionView) -> Int {
-        //return the number of sections
      //   return fetchedResultsController?.sections?.count ?? 1
         return 1
     }
@@ -268,26 +268,21 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
         // return the number of items
      //   new pins should show the placeholders, old pins should not!
         if isNewPin {
+            // only make enough placeholders for the number of available photos; e.g., if there are only 8 photos available at a site, only create 8 placeholders.
             return numOfPhotos
         } else {
+            // old pins should return their stored number of photos:
             return fetchedResultsController?.sections?[section].numberOfObjects ?? 0
         }
     }
 // https://stackoverflow.com/questions/24231680/loading-downloading-image-from-url-on-swift/51746517#51746517
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-  /*      let aPhoto = fetchedResultsController?.object(at: indexPath)
+ 
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
-    
-        // Configure the cell
+        // here is the placeholder image:
         cell.photoCell.image = UIImage(named: "VirtualTourist_180")
-        let myFile = aPhoto?.file
-        if let myFile = myFile {
-        cell.photoCell.image = UIImage(data: myFile)
-          }
-        return cell   */
-        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! PhotoCollectionViewCell
-        cell.photoCell.image = UIImage(named: "VirtualTourist_180")
+        // the inequality below is necessary because the total number of images is set above in "numberOfItemsInSection" which may be greater than the number of available images at any given moment while the collection view is being populated with photos.  Without this inequality, the "cellForItemAt" woud attempt to access at "(at: indexPath)" that does not yet exist with a resultant error!
         if indexPath.item < fetchedResultsController?.sections?[0].numberOfObjects ?? 0 {
             let aPhoto = fetchedResultsController?.object(at: indexPath)
             let myFile = aPhoto?.file
@@ -313,35 +308,13 @@ class PhotoAlbumCollectionViewController: UICollectionViewController, NSFetchedR
     }
     }
 }
-    // MARK: UICollectionViewDelegate
+// adapted from: https://stackoverflow.com/questions/38028013/how-to-set-uicollectionviewcell-width-and-height-programmatically
+    extension PhotoAlbumCollectionViewController: UICollectionViewDelegateFlowLayout{
+        func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize
+        {
+                let dimension = mathForCalculatingCollectionViewCell()
+                return CGSize(width: dimension, height: dimension)
+        }
 
-    /*
-    // Uncomment this method to specify if the specified item should be highlighted during tracking
-    override func collectionView(_ collectionView: UICollectionView, shouldHighlightItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment this method to specify if the specified item should be selected
-    override func collectionView(_ collectionView: UICollectionView, shouldSelectItemAt indexPath: IndexPath) -> Bool {
-        return true
-    }
-    */
-
-    /*
-    // Uncomment these methods to specify if an action menu should be displayed for the specified item, and react to actions performed on the item
-    override func collectionView(_ collectionView: UICollectionView, shouldShowMenuForItemAt indexPath: IndexPath) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, canPerformAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) -> Bool {
-        return false
-    }
-
-    override func collectionView(_ collectionView: UICollectionView, performAction action: Selector, forItemAt indexPath: IndexPath, withSender sender: Any?) {
     
     }
-    */
-
-
