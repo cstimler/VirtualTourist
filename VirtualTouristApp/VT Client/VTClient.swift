@@ -10,7 +10,7 @@ import Foundation
 class VTClient {
     
     struct Auth {
-        static var apiKey = "531ecee9a4ccc88dc0f9878fcf2bd4e7"
+        static var apiKey = "MYAPIKEY"
     }
     
     static var photoInfo:FlickrPhotosSearchResponse!

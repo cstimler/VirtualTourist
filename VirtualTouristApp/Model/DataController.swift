@@ -14,7 +14,8 @@ class DataController {
     var viewContext: NSManagedObjectContext {
         return persistentContainer.viewContext
     }
-    
+    // just added this and boy does that help!!!
+    var managedObjectContext = NSManagedObjectContext(concurrencyType: .privateQueueConcurrencyType)
     
     init(modelName:String) {
         persistentContainer = NSPersistentContainer(name: modelName)
